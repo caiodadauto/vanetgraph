@@ -17,7 +17,7 @@ if __name__ == "__main__":
     p.add_argument("--transmission-range", type=float, default=200.0, help="Maximum range for transmission")
     p.add_argument("--metrics", type=metrics, default=["d", "dc", "pgr"], help="Matrics to be computed")
     p.add_argument("--last-read-time", type=int, default=-1, help="Time in until the graphs already been processed")
-    p.add_argument("--n-proc", type=int, help="Number of threads to be used in the OpenMP")
+    p.add_argument("--n-proc", type=int, default=None, help="Number of threads to be used in the OpenMP")
 
     args = p.parse_args()
     vg.parser(**vars(args))

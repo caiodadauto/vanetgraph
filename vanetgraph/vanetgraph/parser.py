@@ -57,13 +57,9 @@ def parser( raw_file_path, n_proc=None, last_read_time=-1, graph_root="graphs/",
     if not os.path.isdir(graph_root):
         os.makedirs(graph_root)
 
-    i = 0
     n_proc = cpu_count() if not n_proc else n_proc
     graph_lines_generator = raw_graph_generator(raw_file_path, last_read_time)
     for time, label, pos, speed in graph_lines_generator:
         start = get_time();
         create_graph(pos, speed, label, metrics, n_proc, transmission_range, graph_root, time)
         file_logger.info("Processed Graph: size - {}, time - {}, duration - {:.4f}".format( len(label), time, get_time() - start))
-        if i == 5:
-            break
-        i += 1
