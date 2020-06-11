@@ -45,7 +45,7 @@ def raw_graph_generator(raw_file_path, last_read_time):
         last_time = time
         yield graph_time, label_out, pos_arr, speed_arr
 
-def parser( raw_file_path, n_proc=None, last_read_time=-1, graph_root="graphs/", transmission_range=200.0, metrics=["d", "dc", "pgr"] ):
+def parser( raw_file_path, n_proc=None, last_read_time=-1, graph_root="graphs/", transmission_range=200.0, metrics=["d", "dgc", "pgr"] ):
     formatter = logging.Formatter( '%(asctime)s - %(name)s - %(levelname)s - %(message)s' )
     file_logger = logging.getLogger( 'Logger' )
     file_logger.setLevel( logging.DEBUG )
