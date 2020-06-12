@@ -63,28 +63,29 @@ cpdef create_graph( np.ndarray[np.float32_t, ndim=2] pos, np.ndarray[np.float32_
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef get_metrics( object G, int n_nodes, int n_edges, int time, str path, list metrics, short save_json=True ):
-    dict_metrics = {}
+cpdef get_metrics( object G, int n_nodes, int n_edges, int time, str path, list metrics, list labels=None ):
+    dict_metrics = {"labels": labels if labels != None else G.vp.vp.label.get_2d_array([0]).tolist()[0],
+                    "macro": {}, "micro": {}}
     # Density
     if "d" in metrics:
         if n_nodes <= 1:
             density = 0.0
         else:
             density = ( 2.0 * n_edges ) / ( n_nodes * (n_nodes - 1.0) )
-        dict_metrics["density"] = density
+        dict_metrics["macro"]["density"] = density
 
     # Degree
     if "dg" in metrics:
         if n_nodes <= 1:
-            degree = np.zeros(n_nodes, dtype=np.float64)
+            degree = np.zeros(n_nodes, dtype=np.float64).tolist()
         else:
             degree = G.degree_property_map('total').get_array().tolist()
-        dict_metrics["degree"] = degree
+        dict_metrics["micro"]["degree"] = degree
 
     # Degree centrality
     if "dgc" in metrics:
         if n_nodes <= 1:
-            degree_centrality = np.zeros(n_nodes, dtype=np.float64)
+            degree_centrality = np.zeros(n_nodes, dtype=np.float64).tolist()
         else:
             degree_centrality = ( G.degree_property_map('total').get_array() / <double>(n_nodes - 1.0) ).tolist()
         dict_metrics["degree_centrality"] = degree_centrality
@@ -92,18 +93,18 @@ cpdef get_metrics( object G, int n_nodes, int n_edges, int time, str path, list 
     # Clustering coefficient ( non-weighted )
     if "cnw" in metrics:
         cluster_nw = local_clustering(G).get_array().tolist()
-        dict_metrics["cluster_nw"] = cluster_nw
+        dict_metrics["micro"]["cluster_nw"] = cluster_nw
 
     # Clustering coefficient ( weighted )
     if "cw" in metrics:
         cluster_w = local_clustering(G, weight=G.ep.weight).get_array().tolist()
-        dict_metrics["cluster_w"] = cluster_w
+        dict_metrics["micro"]["cluster_w"] = cluster_w
 
     # Page Rank
     if "pgr" in metrics:
         page_rank = pagerank(G).get_array().tolist()
-        dict_metrics["page_range"] = page_rank
+        dict_metrics["micro"]["page_range"] = page_rank
 
-    if save_json:
-        with open(os.path.join(path, "{}.json".format(time)), "w") as f:
-            json.dump(dict_metrics, f)
+    # print(dict_metrics)
+    with open(os.path.join(path, "{}.json".format(time)), "w") as f:
+        json.dump(dict_metrics, f)
