@@ -30,7 +30,7 @@ from get_edges cimport get_edges, EdgeProp
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef create_graph( np.ndarray[np.float32_t, ndim=2] pos, np.ndarray[np.float32_t, ndim=1] speed,
-                    list label, list metrics, int n_proc, float th, str path, int time ):
+                    list label, int n_proc, float th, str path, int time ):
     cdef int i
     cdef int n_edges
     cdef int n_nodes = pos.shape[0]
@@ -59,7 +59,7 @@ cpdef create_graph( np.ndarray[np.float32_t, ndim=2] pos, np.ndarray[np.float32_
     G.ep.weight = G.new_ep("float", vals=weights)
     G.save(os.path.join(path, "{}.gt.xz".format(time)))
 
-    get_metrics( G, n_nodes, n_edges, time, path, metrics )
+    # get_metrics( G, n_nodes, n_edges, time, path, metrics )
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -88,7 +88,7 @@ cpdef get_metrics( object G, int n_nodes, int n_edges, int time, str path, list 
             degree_centrality = np.zeros(n_nodes, dtype=np.float64).tolist()
         else:
             degree_centrality = ( G.degree_property_map('total').get_array() / <double>(n_nodes - 1.0) ).tolist()
-        dict_metrics["degree_centrality"] = degree_centrality
+        dict_metrics["micro"]["degree_centrality"] = degree_centrality
 
     # Clustering coefficient ( non-weighted )
     if "cnw" in metrics:

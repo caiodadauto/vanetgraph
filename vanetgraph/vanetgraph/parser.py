@@ -10,12 +10,13 @@ import graph_tool as gt
 from .utils.constructor import create_graph
 
 
-def raw_graph_generator(raw_file_path, last_read_time):
+def raw_graph_generator(raw_file_path, last_read_time, file_logger):
     with open(raw_file_path, "r") as f:
         pos = []
         speed = []
         label = []
         last_time = np.inf
+        labels_translate= {}
         for line in f:
             time = int(line.split(" ")[0].rstrip())
             if time > last_read_time:
@@ -23,9 +24,15 @@ def raw_graph_generator(raw_file_path, last_read_time):
                 x = line.split(" ")[2].rstrip()
                 y = line.split(" ")[3].rstrip()
                 s = line.split(" ")[4].rstrip()
-                label.append(l)
-                pos.append([x, y])
-                speed.append(s)
+                if (l not in label and [x,y] not in pos) or (last_time < time):
+                    if not l in labels_translate.keys():
+                        labels_translate[l] = len(labels_translate)
+                    label.append(labels_translate[l])
+                    pos.append([x, y])
+                    speed.append(s)
+                else:
+                    file_logger.warning("Vehicle excluded, same label ( {} ) or same position  ( {:.3f}, {:.3f} ) at the same time.".format(
+                       l, float(x), float(y)))
                 if last_time < time:
                     graph_time = last_time
                     pos_arr = np.array(pos[:-1], dtype='f4')
@@ -45,7 +52,7 @@ def raw_graph_generator(raw_file_path, last_read_time):
         last_time = time
         yield graph_time, label_out, pos_arr, speed_arr
 
-def parser( raw_file_path, n_proc=None, last_read_time=-1, graph_root="graphs/", transmission_range=200.0, metrics=["d", "dgc", "pgr"] ):
+def parser( raw_file_path, n_proc=None, last_read_time=-1, graph_root="graphs/", transmission_range=200.0 ):
     formatter = logging.Formatter( '%(asctime)s - %(name)s - %(levelname)s - %(message)s' )
     file_logger = logging.getLogger( 'Logger' )
     file_logger.setLevel( logging.DEBUG )
@@ -58,8 +65,9 @@ def parser( raw_file_path, n_proc=None, last_read_time=-1, graph_root="graphs/",
         os.makedirs(graph_root)
 
     n_proc = cpu_count() if not n_proc else n_proc
-    graph_lines_generator = raw_graph_generator(raw_file_path, last_read_time)
+    graph_lines_generator = raw_graph_generator(raw_file_path, last_read_time, file_logger)
     for time, label, pos, speed in graph_lines_generator:
         start = get_time();
-        create_graph(pos, speed, label, metrics, n_proc, transmission_range, graph_root, time)
+        # print(pos, speed, label, n_proc, transmission_range, graph_root, time)
+        create_graph(pos, speed, label, n_proc, transmission_range, graph_root, time)
         file_logger.info("Processed Graph: size - {}, time - {}, duration - {:.4f}".format( len(label), time, get_time() - start))
