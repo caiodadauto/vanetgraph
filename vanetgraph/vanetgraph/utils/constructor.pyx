@@ -63,47 +63,57 @@ cpdef create_graph( np.ndarray[np.float32_t, ndim=2] pos, np.ndarray[np.float32_
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cpdef get_metric_value( object G, int n_nodes, int n_edges, str metric ):
+    value = -1;
+    if "d" == metric:
+        # Density
+        if n_nodes <= 1:
+            value = 0.0
+        else:
+            value = ( 2.0 * n_edges ) / ( n_nodes * (n_nodes - 1.0) )
+    elif "dg" == metric:
+        # Degree
+        if n_nodes <= 1:
+            value = np.zeros(n_nodes, dtype=np.float64).tolist()
+        else:
+            value = G.degree_property_map('total').get_array().tolist()
+    elif "dgc" == metric:
+        # Degree centrality
+        if n_nodes <= 1:
+            value = np.zeros(n_nodes, dtype=np.float64).tolist()
+        else:
+            value = ( G.degree_property_map('total').get_array() / <double>(n_nodes - 1.0) ).tolist()
+    elif "cnw" == metric:
+        # Clustering coefficient ( non-weighted )
+        value = local_clustering(G).get_array().tolist()
+    elif "cw" == metric:
+        # Clustering coefficient ( weighted )
+        value = local_clustering(G, weight=G.ep.weight).get_array().tolist()
+    elif "pgr" == metric:
+        # Page Rank
+        value = pagerank(G).get_array().tolist()
+    return value
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef get_metrics( object G, int n_nodes, int n_edges, int time, str path, list metrics, list labels=None ):
     dict_metrics = {"labels": labels if labels != None else G.vp.vp.label.get_2d_array([0]).tolist()[0],
                     "macro": {}, "micro": {}}
-    # Density
-    if "d" in metrics:
-        if n_nodes <= 1:
-            density = 0.0
-        else:
-            density = ( 2.0 * n_edges ) / ( n_nodes * (n_nodes - 1.0) )
-        dict_metrics["macro"]["density"] = density
-
-    # Degree
-    if "dg" in metrics:
-        if n_nodes <= 1:
-            degree = np.zeros(n_nodes, dtype=np.float64).tolist()
-        else:
-            degree = G.degree_property_map('total').get_array().tolist()
-        dict_metrics["micro"]["degree"] = degree
-
-    # Degree centrality
-    if "dgc" in metrics:
-        if n_nodes <= 1:
-            degree_centrality = np.zeros(n_nodes, dtype=np.float64).tolist()
-        else:
-            degree_centrality = ( G.degree_property_map('total').get_array() / <double>(n_nodes - 1.0) ).tolist()
-        dict_metrics["micro"]["degree_centrality"] = degree_centrality
-
-    # Clustering coefficient ( non-weighted )
-    if "cnw" in metrics:
-        cluster_nw = local_clustering(G).get_array().tolist()
-        dict_metrics["micro"]["cluster_nw"] = cluster_nw
-
-    # Clustering coefficient ( weighted )
-    if "cw" in metrics:
-        cluster_w = local_clustering(G, weight=G.ep.weight).get_array().tolist()
-        dict_metrics["micro"]["cluster_w"] = cluster_w
-
-    # Page Rank
-    if "pgr" in metrics:
-        page_rank = pagerank(G).get_array().tolist()
-        dict_metrics["micro"]["page_range"] = page_rank
+    for m in metrics:
+        value = get_metric_value( G, n_nodes, n_edges, m )
+        if "d" == m:
+            dict_metrics["macro"]["density"] = value
+        elif "dg" == m:
+            dict_metrics["micro"]["degree"] = value
+        elif "dgc" == m:
+            dict_metrics["micro"]["degree_centrality"] = value
+        elif "cnw" == m:
+            dict_metrics["micro"]["cluster_nw"] = value
+        elif "cw" == m:
+            dict_metrics["micro"]["cluster_w"] = value
+        elif "pgr" == m:
+            dict_metrics["micro"]["page_range"] = value
 
     # print(dict_metrics)
     with open(os.path.join(path, "{}.json".format(time)), "w") as f:

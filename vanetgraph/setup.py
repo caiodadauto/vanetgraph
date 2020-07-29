@@ -21,7 +21,6 @@ setup(
     author='Caio Dadauto',
     author_email='caiodadauto@gmail.com',
     packages=find_packages(),
-    # package_dir = {"vanetgraph": "src", "vanetgraph.utils": "src/utils"},
     ext_modules = ext_modules,
     cmdclass = {'build_ext': build_ext},
     zip_safe=False
