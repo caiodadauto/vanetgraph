@@ -64,7 +64,7 @@ cpdef create_graph( np.ndarray[np.float32_t, ndim=2] pos, np.ndarray[np.float32_
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef get_metric_value( object G, int n_nodes, int n_edges, str metric ):
-    value = -1;
+    gt.openmp_set_num_threads(gt.openmp_get_num_threads())
     if "d" == metric:
         # Density
         if n_nodes <= 1:
@@ -92,6 +92,8 @@ cpdef get_metric_value( object G, int n_nodes, int n_edges, str metric ):
     elif "pgr" == metric:
         # Page Rank
         value = pagerank(G).get_array().tolist()
+    else:
+        value = -1
     return value
 
 

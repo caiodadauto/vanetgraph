@@ -10,7 +10,7 @@ def metrics(s):
     except:
         raise argparse.ArgumentTypeError("Metrics must be a sequence of strings splited by commas.")
 
-def run(root_path, window_size, metrics, from_jsons, create_rhythms, non_nx_convert):
+def run(root_path, window_size, metrics, from_jsons, create_rhythms, non_nx_convert, last_time):
     rootdir = Path(root_path)
     savedir = rootdir.parent
     if from_jsons:
@@ -24,12 +24,13 @@ def run(root_path, window_size, metrics, from_jsons, create_rhythms, non_nx_conv
     if create_rhythms:
         process_gvr(savedir, obj_paths, window_size)
     if not non_nx_convert:
-        create_data_nx(rootdir, metrics)
+        create_data_nx(rootdir, metrics, last_time)
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("root_path", type=str, help="Path to the target assets")
+    p.add_argument("--last-time", type=int, default=-1, help="Last processed time")
     p.add_argument("--window-size", type=int, default=120, help="Window size to create graph rhythms")
     p.add_argument("--metrics", type=metrics, default=["d", "dgc", "cnw"], help="Matrics to be computed")
     p.add_argument("--from-jsons", action="store_true", help="Indicate that the graph rhythms will be created from json files")
